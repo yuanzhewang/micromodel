@@ -8,3 +8,4 @@ __pycache__/
 *.bin
 .ipynb_checkpoints/
 .claude/settings.local.json
+eval/results/*.log

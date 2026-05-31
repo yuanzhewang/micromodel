@@ -1,0 +1,46 @@
+# Phase 2 SFT config — Qwen3-1.7B-Base -> chat, full fine-tune.
+# Consumed by scripts/train_sft.py. Values chosen for a single H100 80GB.
+# This is the QUICK first-pass (subset); scale up after validating the pipeline.
+
+model: Qwen/Qwen3-1.7B-Base
+output_dir: checkpoints/sft-v1
+
+# --- data ---
+# smoltalk2 is multi-config; the 'SFT' config splits are named by source and
+# tagged _think / _no_think. We want a clean NON-reasoning chat model, so we use
+# _no_think splits, mixing broad instruction data with instruction-following sets
+# (helps the IFEval 0.214 baseline) and natural multi-turn chat.
+dataset: HuggingFaceTB/smoltalk2
+dataset_config: SFT
+dataset_splits:
+  - smoltalk_smollm3_smol_magpie_ultra_no_think          # broad instruction-following (main)
+  - tulu_3_sft_personas_instruction_following_no_think    # explicit IF (helps IFEval)
+  - smoltalk_smollm3_everyday_conversations_no_think      # natural multi-turn chat
+  - smoltalk_smollm3_systemchats_30k_no_think             # system-prompt following
+
+subset_size: 8000           # quick first pass; null = full
+max_length: 1024
+# packing relies on flash-attn varlen masking; without flash-attn it causes
+# cross-sample attention contamination, so keep it OFF on this box. (For the
+# full run we can install flash-attn to re-enable fast packing.)
+packing: false
+assistant_only_loss: true   # train only on assistant turns (needs {% generation %} template)
+
+# --- optimization ---
+num_train_epochs: 1
+per_device_train_batch_size: 16
+gradient_accumulation_steps: 2      # effective batch ~32 (quick pass)
+learning_rate: 1.0e-5
+lr_scheduler_type: cosine
+warmup_ratio: 0.03
+weight_decay: 0.0
+max_grad_norm: 1.0
+bf16: true
+gradient_checkpointing: true
+
+# --- logging / saving ---
+logging_steps: 10
+save_strategy: epoch
+save_total_limit: 1
+seed: 42
+report_to: none
