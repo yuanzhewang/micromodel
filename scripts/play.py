@@ -1,14 +1,19 @@
 """Interactive playground — feel the model's raw output.
 
 Loads the model once, then a REPL. Two modes:
-  chat  - applies the ChatML template, keeps multi-turn history (talk to it)
-  base  - raw text completion (give it a prefix, it continues)
+  chat  - applies the ChatML template, keeps multi-turn history.
+          Ask COMPLETE questions/requests here:  "What is the capital of France?"
+  base  - raw text completion (no template, no history).
+          Give it a FRAGMENT to continue here:   "The capital of France is"
 
-IMPORTANT for the *base* model: in chat mode it sees a format it was barely
-trained on, so its token distribution is unstable. With sampling it frequently
-degenerates into garbage loops (e.g. repeating a random token). We therefore
-default to GREEDY decoding (temp 0) + a repetition penalty, which keeps the base
-model coherent. After SFT this is far more robust and you can raise temp freely.
+Picking the wrong mode for your input is the #1 cause of bad output on the BASE
+model: a fragment ("the capital of france is") sent in chat mode looks like a
+broken user message, so the model flails. Use base mode for fragments.
+
+For the *base* model we default to GREEDY decoding (temp 0) + a repetition
+penalty, which keeps it coherent. With sampling it tends to degenerate into
+repeated-token loops on instruction-style prompts. After SFT this is robust and
+you can raise temp freely.
 
 Run:
   venv/bin/python scripts/play.py                      # chat mode, greedy
@@ -19,9 +24,10 @@ Run:
   venv/bin/python scripts/play.py --demo               # fixed demo prompts, then exit
 
 REPL commands:
-  /mode chat|base   switch mode          /temp 0.9   sampling temp (0 = greedy)
-  /system <text>    set system prompt    /reset      clear history
-  /reppen 1.3       repetition penalty   /help   /quit
+  /chat  /base      switch mode          /temp 0.9   sampling temp (0 = greedy)
+  /mode chat|base   switch mode          /reppen 1.3 repetition penalty
+  /system <text>    set system prompt    /reset      clear chat history
+  /help   /quit
 """
 from __future__ import annotations
 import argparse, os, sys
@@ -30,7 +36,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from eval.common import load_model_and_tokenizer, has_chat_template
 from transformers import TextStreamer
 
-C_USER, C_BOT, C_OFF = "\033[32m", "\033[36m", "\033[0m"
+C_USER, C_BOT, C_OFF, C_DIM = "\033[32m", "\033[36m", "\033[0m", "\033[90m"
 
 
 def chat_text(tok, msgs):
@@ -75,9 +81,10 @@ def main():
 
     is_base = "base" in args.model.lower()
     if is_base:
-        print("\n  NOTE: this is the raw BASE model — it completes text, it doesn't reliably")
-        print("  follow instructions. Greedy + rep-penalty keep it coherent; expect it to")
-        print("  ramble or ignore constraints. That's the gap SFT will close.")
+        print(f"\n{C_DIM}  NOTE: raw BASE model — it completes text, it doesn't reliably follow")
+        print(f"  instructions. In CHAT mode ask COMPLETE questions ('What is the capital")
+        print(f"  of France?'); for FRAGMENTS ('The capital of France is') use /base.")
+        print(f"  Use /reset between unrelated questions. Expect rambling — SFT fixes it.{C_OFF}")
 
     def reply_to(user_text, m):
         if m == "chat":
@@ -104,7 +111,8 @@ def main():
     if args.prompt is not None:
         reply_to(args.prompt, mode); return
 
-    print(f"\nReady. mode={mode} temp={temp} rep_pen={rep_pen}. /help for commands, /quit to exit.\n")
+    print(f"\nReady. mode={mode} temp={temp} rep_pen={rep_pen}. /help for commands, /quit to exit.")
+    print(f"{C_DIM}tip: /chat for questions, /base for fragments, /reset to clear history.{C_OFF}\n")
     while True:
         try:
             user = input(f"{C_USER}you>{C_OFF} ").strip()
@@ -117,7 +125,9 @@ def main():
             if cmd == "/quit":
                 break
             elif cmd == "/help":
-                print("/mode chat|base   /temp X   /reppen X   /system <text>   /reset   /quit")
+                print("/chat  /base   /mode chat|base   /temp X   /reppen X   /system <text>   /reset   /quit")
+            elif cmd in ("/chat", "/base"):
+                mode = cmd[1:]; print(f"mode={mode}")
             elif cmd == "/mode" and arg in ("chat", "base"):
                 mode = arg; print(f"mode={mode}")
             elif cmd == "/temp":
