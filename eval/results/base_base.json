@@ -1,0 +1,42 @@
+{
+  "label": "base",
+  "model": "Qwen/Qwen3-1.7B-Base",
+  "mode": "base",
+  "timestamp": "2026-05-31 02:55:03",
+  "config": {
+    "limit": null,
+    "batch_size": 48,
+    "max_new_tokens": null
+  },
+  "scores": {
+    "gsm8k": {
+      "task": "gsm8k",
+      "mode": "base",
+      "n": 1319,
+      "metric": "exact_match",
+      "score": 0.7710386656557998,
+      "correct": 1017,
+      "seconds": 720.1
+    },
+    "ifeval": {
+      "task": "ifeval",
+      "mode": "base",
+      "n": 541,
+      "metric": "prompt_strict",
+      "score": 0.2144177449168207,
+      "prompt_strict": 0.2144177449168207,
+      "prompt_loose": 0.23475046210720887,
+      "inst_strict": 0.3213429256594724,
+      "inst_loose": 0.3393285371702638,
+      "seconds": 405.8
+    },
+    "vibe": {
+      "task": "vibe",
+      "mode": "base",
+      "n": 15,
+      "metric": "none (qualitative)",
+      "score": null,
+      "seconds": 9.1
+    }
+  }
+}
