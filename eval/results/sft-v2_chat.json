@@ -1,0 +1,42 @@
+{
+  "label": "sft-v2",
+  "model": "checkpoints/sft-v2",
+  "mode": "chat",
+  "timestamp": "2026-05-31 10:58:45",
+  "config": {
+    "limit": null,
+    "batch_size": 48,
+    "max_new_tokens": null
+  },
+  "scores": {
+    "gsm8k": {
+      "task": "gsm8k",
+      "mode": "chat",
+      "n": 1319,
+      "metric": "exact_match",
+      "score": 0.5716451857467779,
+      "correct": 754,
+      "seconds": 373.8
+    },
+    "ifeval": {
+      "task": "ifeval",
+      "mode": "chat",
+      "n": 541,
+      "metric": "prompt_strict",
+      "score": 0.3900184842883549,
+      "prompt_strict": 0.3900184842883549,
+      "prompt_loose": 0.4066543438077634,
+      "inst_strict": 0.5035971223021583,
+      "inst_loose": 0.5239808153477218,
+      "seconds": 410.4
+    },
+    "vibe": {
+      "task": "vibe",
+      "mode": "chat",
+      "n": 15,
+      "metric": "none (qualitative)",
+      "score": null,
+      "seconds": 9.3
+    }
+  }
+}

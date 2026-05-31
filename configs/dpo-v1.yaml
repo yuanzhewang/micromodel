@@ -1,0 +1,29 @@
+# Phase 3 DPO v1 — preference-tune the SFT model toward chosen responses.
+# Starts from checkpoints/sft-v1 (best preserved GSM8K 0.735; IFEval 0.333).
+# Dataset: trl-lib/ultrafeedback_binarized (conversational chosen/rejected pairs).
+# Goal: lift IFEval / response quality without crushing the GSM8K v1 preserved.
+model: checkpoints/sft-v1
+output_dir: checkpoints/dpo-v1
+dataset: trl-lib/ultrafeedback_binarized
+dataset_splits:
+  - train
+subset_size: 62135          # full train set; null = full
+max_length: 1024            # trl 1.5.1 DPOConfig has no max_prompt_length; folds into max_length
+attn_implementation: sdpa
+beta: 0.1                    # KL strength to the frozen SFT reference
+loss_type: sigmoid          # vanilla DPO
+num_train_epochs: 1
+per_device_train_batch_size: 8
+gradient_accumulation_steps: 8   # effective batch 64
+learning_rate: 5.0e-7        # DPO uses a much smaller LR than SFT
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+weight_decay: 0.0
+max_grad_norm: 1.0
+bf16: true
+gradient_checkpointing: true
+logging_steps: 20
+save_strategy: epoch
+save_total_limit: 1
+seed: 42
+report_to: none

@@ -73,13 +73,22 @@ def main():
     # 'chat_template_kwargs') concatenate cleanly into one training set.
     dcfg = cfg.get("dataset_config")
     splits = cfg.get("dataset_splits") or ["train"]
+    # Optional per-split caps (parallel list to dataset_splits): take only the
+    # first N of each split (after a per-split shuffle) before concatenating, so
+    # the data mix is controllable (e.g. fixed math fraction). 0/null = keep all.
+    caps = cfg.get("dataset_split_sizes")
     parts = []
-    for sp in splits:
+    for i, sp in enumerate(splits):
         d = load_dataset(cfg["dataset"], dcfg, split=sp) if dcfg else load_dataset(cfg["dataset"], split=sp)
         if "messages" not in d.column_names and "conversations" in d.column_names:
             d = d.rename_column("conversations", "messages")
         d = d.remove_columns([c for c in d.column_names if c != "messages"])
-        print(f"  loaded split {sp!r}: {len(d)} examples", flush=True)
+        cap = caps[i] if caps and i < len(caps) else None
+        if cap:
+            k = min(cap, len(d))
+            d = d.shuffle(seed=cfg["seed"]).select(range(k))
+        print(f"  loaded split {sp!r}: {len(d)} examples"
+              + (f" (capped to {cap})" if cap else ""), flush=True)
         parts.append(d)
     ds = parts[0] if len(parts) == 1 else concatenate_datasets(parts)
     if cfg.get("subset_size"):
