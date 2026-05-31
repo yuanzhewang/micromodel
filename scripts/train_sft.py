@@ -1,11 +1,12 @@
 """Phase 2 SFT — Qwen3-1.7B-Base -> chat model (full fine-tune, trl 1.5).
 
-Reads configs/sft.yaml. Key design points (verified against the installed stack):
+Reads a YAML config (configs/sft*.yaml). Key design points (verified against the
+installed stack):
   - Plain ChatML chat template WITH {% generation %} markers, so TRL can mask the
     loss to assistant turns only (assistant_only_loss=True). We override Qwen3's
     default template to drop its empty <think></think> blocks — cleaner outputs.
-  - Full fine-tune, bf16, SDPA attention (no flash-attn on this box), packing +
-    gradient checkpointing for throughput/memory on a single H100 80GB.
+  - Full fine-tune, bf16, attention impl from config (sdpa default; flash_attention_2
+    when available). packing + gradient checkpointing for throughput/memory.
   - The trained tokenizer is saved with the SAME clean template, so eval (--mode
     chat) and scripts/play.py speak the same format the model was trained on.
 
@@ -49,7 +50,6 @@ def load_cfg(path):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/sft.yaml")
-    # lightweight overrides for experimentation without editing yaml
     ap.add_argument("--subset-size", type=int, default=None)
     ap.add_argument("--output-dir", default=None)
     args = ap.parse_args()
@@ -89,7 +89,8 @@ def main():
 
     # --- model ---
     model = AutoModelForCausalLM.from_pretrained(
-        cfg["model"], dtype=torch.bfloat16, attn_implementation="sdpa"
+        cfg["model"], dtype=torch.bfloat16,
+        attn_implementation=cfg.get("attn_implementation", "sdpa"),
     )
     if cfg.get("gradient_checkpointing"):
         model.config.use_cache = False
