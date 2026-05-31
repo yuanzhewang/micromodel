@@ -1,0 +1,9 @@
+venv/
+hf-cache/
+checkpoints/
+data/
+wandb/
+__pycache__/
+*.safetensors
+*.bin
+.ipynb_checkpoints/
