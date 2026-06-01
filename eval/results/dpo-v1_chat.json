@@ -1,0 +1,42 @@
+{
+  "label": "dpo-v1",
+  "model": "checkpoints/dpo-v1",
+  "mode": "chat",
+  "timestamp": "2026-05-31 23:20:00",
+  "config": {
+    "limit": null,
+    "batch_size": 48,
+    "max_new_tokens": null
+  },
+  "scores": {
+    "gsm8k": {
+      "task": "gsm8k",
+      "mode": "chat",
+      "n": 1319,
+      "metric": "exact_match",
+      "score": 0.7399545109931767,
+      "correct": 976,
+      "seconds": 371.8
+    },
+    "ifeval": {
+      "task": "ifeval",
+      "mode": "chat",
+      "n": 541,
+      "metric": "prompt_strict",
+      "score": 0.3364140480591497,
+      "prompt_strict": 0.3364140480591497,
+      "prompt_loose": 0.35489833641404805,
+      "inst_strict": 0.4628297362110312,
+      "inst_loose": 0.48201438848920863,
+      "seconds": 416.4
+    },
+    "vibe": {
+      "task": "vibe",
+      "mode": "chat",
+      "n": 15,
+      "metric": "none (qualitative)",
+      "score": null,
+      "seconds": 9.0
+    }
+  }
+}

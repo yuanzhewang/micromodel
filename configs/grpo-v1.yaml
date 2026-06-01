@@ -1,0 +1,42 @@
+# Phase 4 RLVR v1 — GRPO with a verifiable GSM8K reward, from the DPO checkpoint.
+# Goal: push GSM8K up via RL on the verifiable answer signal, the RLVR sweet spot.
+# vLLM is incompatible with this stack (torch 2.6 + transformers 5.9), so HF-generate
+# rollouts (use_vllm=False, set in train_grpo.py) -> slower; we bound the run with max_steps.
+model: checkpoints/dpo-v1
+output_dir: checkpoints/grpo-v1
+attn_implementation: sdpa
+
+# --- data ---
+subset_size: null            # GSM8K train = 7473 prompts; null = all
+
+# --- GRPO sampling / objective ---
+num_generations: 8           # group size G (advantage = within-group standardized reward)
+max_completion_length: 512   # CoT solution budget (trl 1.5.1 GRPOConfig has no max_prompt_length)
+temperature: 1.0             # exploration needs entropy; greedy kills GRPO
+top_p: 1.0
+beta: 0.04                   # KL penalty to the frozen initial policy (dpo-v1)
+num_iterations: 1            # mu=1 -> ratio==1, PPO clip inert (REINFORCE-w/-baseline)
+scale_rewards: true          # standardize rewards within each group
+reward_weights: [1.0, 1.0]   # [correctness (0/1), format bonus (0/0.2)]
+log_completions: true        # print sample generations to the log
+
+# --- optimization ---
+max_steps: 300               # bounded first RLVR run (HF-generate rollouts are slow)
+num_train_epochs: 1
+per_device_train_batch_size: 16   # completions/device/microstep (16 % num_generations == 0)
+gradient_accumulation_steps: 2    # -> 32 completions/step = 4 prompts/step
+learning_rate: 1.0e-6
+lr_scheduler_type: constant_with_warmup
+warmup_ratio: 0.03
+weight_decay: 0.0
+max_grad_norm: 1.0
+bf16: true
+gradient_checkpointing: true
+
+# --- logging / saving ---
+logging_steps: 1             # RL: watch reward every step
+save_strategy: steps
+save_steps: 100
+save_total_limit: 1
+seed: 42
+report_to: none
