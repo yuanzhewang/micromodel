@@ -1,0 +1,42 @@
+{
+  "label": "grpo-v1",
+  "model": "checkpoints/grpo-v1",
+  "mode": "chat",
+  "timestamp": "2026-06-01 02:27:23",
+  "config": {
+    "limit": null,
+    "batch_size": 48,
+    "max_new_tokens": null
+  },
+  "scores": {
+    "gsm8k": {
+      "task": "gsm8k",
+      "mode": "chat",
+      "n": 1319,
+      "metric": "exact_match",
+      "score": 0.7778620166793025,
+      "correct": 1026,
+      "seconds": 346.0
+    },
+    "ifeval": {
+      "task": "ifeval",
+      "mode": "chat",
+      "n": 541,
+      "metric": "prompt_strict",
+      "score": 0.3512014787430684,
+      "prompt_strict": 0.3512014787430684,
+      "prompt_loose": 0.3733826247689464,
+      "inst_strict": 0.46642685851318944,
+      "inst_loose": 0.486810551558753,
+      "seconds": 422.6
+    },
+    "vibe": {
+      "task": "vibe",
+      "mode": "chat",
+      "n": 15,
+      "metric": "none (qualitative)",
+      "score": null,
+      "seconds": 10.7
+    }
+  }
+}
