@@ -10,10 +10,10 @@ Picking the wrong mode for your input is the #1 cause of bad output on the BASE
 model: a fragment ("the capital of france is") sent in chat mode looks like a
 broken user message, so the model flails. Use base mode for fragments.
 
-For the *base* model we default to GREEDY decoding (temp 0) + a repetition
-penalty, which keeps it coherent. With sampling it tends to degenerate into
-repeated-token loops on instruction-style prompts. After SFT this is robust and
-you can raise temp freely.
+We default to GREEDY decoding (temp 0). The repetition penalty defaults to AUTO:
+1.3 for the raw base model (which otherwise degenerates into repeated-token loops
+on instruction-style prompts) but 1.0 for fine-tuned chat models, where a penalty
+distorts their well-formed output. Override either with --temp / --rep-pen.
 
 Run:
   venv/bin/python scripts/play.py                      # chat mode, greedy
@@ -65,7 +65,8 @@ def main():
     ap.add_argument("--mode", choices=["chat", "base"], default="chat")
     ap.add_argument("--temp", type=float, default=0.0, help="0 = greedy (default; best for base model)")
     ap.add_argument("--top-p", type=float, default=0.9)
-    ap.add_argument("--rep-pen", type=float, default=1.3, help="repetition penalty (suppresses loops)")
+    ap.add_argument("--rep-pen", type=float, default=None,
+                    help="repetition penalty; default auto (1.3 for raw base model, 1.0 otherwise)")
     ap.add_argument("--max-new-tokens", type=int, default=512)
     ap.add_argument("--system", default=None)
     ap.add_argument("--prompt", default=None, help="one-shot prompt then exit")
@@ -77,9 +78,13 @@ def main():
     mode = args.mode
     if mode == "chat" and not has_chat_template(tok):
         print("(no chat template; using base mode)"); mode = "base"
-    temp, rep_pen, system, history = args.temp, args.rep_pen, args.system, []
 
+    # The 1.3 repetition penalty keeps the RAW base model from looping, but it
+    # distorts the well-formed output of fine-tuned (SFT/DPO/GRPO) chat models —
+    # so default it on only for the base model. An explicit --rep-pen overrides.
     is_base = "base" in args.model.lower()
+    rep_pen = args.rep_pen if args.rep_pen is not None else (1.3 if is_base else 1.0)
+    temp, system, history = args.temp, args.system, []
     if is_base:
         print(f"\n{C_DIM}  NOTE: raw BASE model — it completes text, it doesn't reliably follow")
         print(f"  instructions. In CHAT mode ask COMPLETE questions ('What is the capital")
